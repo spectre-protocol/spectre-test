@@ -1,10 +1,21 @@
 {
   "name": "grimswap-test",
   "version": "1.0.0",
+  "description": "Integration tests for GrimSwap ZK private swaps - End-to-end Groth16 proof verification on Uniswap v4",
   "private": true,
   "type": "module",
+  "keywords": [
+    "zk-snark",
+    "groth16",
+    "integration-test",
+    "uniswap",
+    "v4",
+    "privacy",
+    "poseidon",
+    "merkle-tree",
+    "grimswap"
+  ],
   "scripts": {
-    "test:swap": "tsx src/fullPrivateSwap.ts",
     "test:zk": "tsx src/zkPrivateSwap.ts",
     "test:zk:onchain": "tsx src/zkOnChainTest.ts",
     "deploy:hook": "tsx src/deployHook.ts",
@@ -13,7 +24,6 @@
     "test:zkswap": "tsx src/fullZKSwap.ts"
   },
   "dependencies": {
-    "@grimswap/sdk": "file:../grimswap-sdk",
     "@grimswap/circuits": "file:../grimswap-circuits",
     "circomlibjs": "^0.1.7",
     "snarkjs": "^0.7.4",
