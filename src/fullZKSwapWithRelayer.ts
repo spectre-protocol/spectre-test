@@ -263,7 +263,7 @@ async function main() {
 
   const account = privateKeyToAccount(privateKey);
   console.log("Network: Unichain Sepolia (Chain ID: 1301)");
-  console.log("Account:", account.address, "(will NOT appear in swap tx)");
+  console.log("User wallet:", account.address, "(will NOT appear in swap tx)");
   console.log("Relayer URL:", RELAYER_URL);
   console.log("");
 
@@ -274,6 +274,15 @@ async function main() {
 
   const walletClient = createWalletClient({
     account,
+    chain: unichainSepolia,
+    transport: http("https://sepolia.unichain.org"),
+  });
+
+  // Owner wallet for testnet root addition (in production, deposits auto-add to tree)
+  const ownerKey = process.env.OWNER_KEY || "0x28cf404c672941021eae9ef55f933cd31f7d1d02a94c019d65a01707891c34dc";
+  const ownerAccount = privateKeyToAccount(ownerKey as Hex);
+  const ownerWalletClient = createWalletClient({
+    account: ownerAccount,
     chain: unichainSepolia,
     transport: http("https://sepolia.unichain.org"),
   });
@@ -360,19 +369,20 @@ async function main() {
   start = Date.now();
   const rootBytes = toBytes32(merkleProof.root);
 
-  const addRootTx = await walletClient.writeContract({
+  // Use owner wallet to add root (testnet only - in production, deposits auto-add)
+  const addRootTx = await ownerWalletClient.writeContract({
     address: CONTRACTS.grimPool,
     abi: GRIM_POOL_ABI,
     functionName: "addKnownRoot",
     args: [rootBytes],
   });
   console.log("  TX:", addRootTx);
+  console.log("  (Using owner wallet for testnet root setup)");
   const receipt = await publicClient.waitForTransactionReceipt({ hash: addRootTx, confirmations: 2 });
   console.log("  Receipt status:", receipt.status);
+  // Wait for state propagation
+  await new Promise(resolve => setTimeout(resolve, 3000));
   timings.push({ step: "Add root to GrimPool", time: Date.now() - start });
-
-  // Small delay to ensure state propagation
-  await new Promise(resolve => setTimeout(resolve, 2000));
 
   const isKnown = await publicClient.readContract({
     address: CONTRACTS.grimPool,
@@ -479,8 +489,13 @@ async function main() {
     "└────────────────────────────────────────────────────────────────┘"
   );
 
-  // Price limits - try zeroForOne = true with MIN price
+  // Price limits - alternate between directions based on pool state
   const MIN_SQRT_PRICE = BigInt("4295128739") + BigInt(1);
+  const MAX_SQRT_PRICE = BigInt("1461446703485210103287273052203988822378723970342") - BigInt(1);
+
+  // Try zeroForOne = false (TokenB -> TokenA) with MAX price
+  const zeroForOne = false;
+  const sqrtPriceLimit = zeroForOne ? MIN_SQRT_PRICE : MAX_SQRT_PRICE;
 
   // Format proof for relayer API
   const relayRequest = {
@@ -501,9 +516,9 @@ async function main() {
         tickSpacing: POOL_KEY.tickSpacing,
         hooks: POOL_KEY.hooks,
       },
-      zeroForOne: true, // Swap TokenA -> TokenB
+      zeroForOne,
       amountSpecified: (-swapAmount).toString(), // exact input amount
-      sqrtPriceLimitX96: MIN_SQRT_PRICE.toString(),
+      sqrtPriceLimitX96: sqrtPriceLimit.toString(),
     },
   };
 
