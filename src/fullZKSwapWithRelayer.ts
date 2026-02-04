@@ -47,13 +47,13 @@ const unichainSepolia = {
 
 // Contracts
 const CONTRACTS = {
-  grimPool: "0xad079eAC28499c4eeA5C02D2DE1C81E56b9AA090" as Address,
+  grimPool: "0x023F6b2Bb485A9c77F1b3e4009E58064E53414b9" as Address,
   groth16Verifier: "0xF7D14b744935cE34a210D7513471a8E6d6e696a0" as Address,
-  grimSwapZK: "0x95ED348fCC232FB040e46c77C60308517e4BC0C4" as Address,
+  grimSwapZK: "0xc52c297f4f0d0556b1cd69b655F23df2513eC0C4" as Address,
   poolManager: "0x00B036B58a818B1BC34d502D3fE730Db729e62AC" as Address,
   tokenA: "0x48bA64b5312AFDfE4Fc96d8F03010A0a86e17963" as Address,
   tokenB: "0x96aC37889DfDcd4dA0C898a5c9FB9D17ceD60b1B" as Address,
-  poolHelper: "0x26a669aC1e5343a50260490eC0C1be21f9818b17" as Address,
+  poolHelper: "0x0f8113EfA5527346978534192a76C94a567cae42" as Address,
 };
 
 // Relayer configuration
@@ -322,7 +322,7 @@ async function main() {
   );
 
   let start = Date.now();
-  const swapAmount = parseEther("10");
+  const swapAmount = parseEther("10"); // Default: 10 tokens
   const note = await createDepositNote(swapAmount);
   timings.push({ step: "Create deposit note", time: Date.now() - start });
 
@@ -378,10 +378,10 @@ async function main() {
   });
   console.log("  TX:", addRootTx);
   console.log("  (Using owner wallet for testnet root setup)");
-  const receipt = await publicClient.waitForTransactionReceipt({ hash: addRootTx, confirmations: 2 });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: addRootTx, confirmations: 1 });
   console.log("  Receipt status:", receipt.status);
-  // Wait for state propagation
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  // Brief delay for RPC state propagation
+  await new Promise(resolve => setTimeout(resolve, 2000));
   timings.push({ step: "Add root to GrimPool", time: Date.now() - start });
 
   const isKnown = await publicClient.readContract({
@@ -568,9 +568,13 @@ async function main() {
       "└────────────────────────────────────────────────────────────────┘"
     );
 
+    // Brief delay for RPC state propagation
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     // Check stealth address balance
-    const stealthTokenB = await publicClient.readContract({
-      address: CONTRACTS.tokenB,
+    // zeroForOne=false means TokenB->TokenA, so output is TokenA
+    const stealthTokenA = await publicClient.readContract({
+      address: CONTRACTS.tokenA,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [stealthAddress as Address],
@@ -599,7 +603,7 @@ async function main() {
     );
     console.log("");
     console.log("  Stealth address:", stealthAddress);
-    console.log("  Token B received:", formatEther(stealthTokenB));
+    console.log("  Token A received:", formatEther(stealthTokenA));
     console.log("  Nullifier spent:", isSpent);
 
     const totalTime = Date.now() - totalStart;
