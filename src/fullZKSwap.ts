@@ -39,16 +39,16 @@ const unichainSepolia = {
   rpcUrls: { default: { http: ["https://sepolia.unichain.org"] } },
 } as const;
 
-// FINAL deployed contracts (V2 - production ready)
+// V3 deployed contracts (Dual-Mode Hook + Router)
 const CONTRACTS = {
-  grimPool: "0x023F6b2Bb485A9c77F1b3e4009E58064E53414b9" as Address,
+  grimPool: "0xEAB5E7B4e715A22E8c114B7476eeC15770B582bb" as Address,
   groth16Verifier: "0xF7D14b744935cE34a210D7513471a8E6d6e696a0" as Address,
-  grimSwapZK: "0xc52c297f4f0d0556b1cd69b655F23df2513eC0C4" as Address,
+  grimSwapZK: "0xeB72E2495640a4B83EBfc4618FD91cc9beB640c4" as Address,
+  grimSwapRouter: "0xC13a6a504da21aD23c748f08d3E991621D42DA4F" as Address,
   poolManager: "0x00B036B58a818B1BC34d502D3fE730Db729e62AC" as Address,
-  // Existing test tokens from ring sig tests
   tokenA: "0x48bA64b5312AFDfE4Fc96d8F03010A0a86e17963" as Address,
   tokenB: "0x96aC37889DfDcd4dA0C898a5c9FB9D17ceD60b1B" as Address,
-  poolHelper: "0x0f8113EfA5527346978534192a76C94a567cae42" as Address,
+  poolHelper: "0xee33461fCD6cbA3b7B2D8B6Bb66577680880A2B2" as Address,
 };
 
 // ABIs
